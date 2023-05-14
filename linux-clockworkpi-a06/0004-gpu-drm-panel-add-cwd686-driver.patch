@@ -67,14 +67,14 @@ index 000000000..6a0eabf92
 +
 +static const struct drm_display_mode default_mode = {
 +	.clock = 54465,
-+	.hdisplay = 485,
-+	.hsync_start = 485 + 150,
-+	.hsync_end = 485 + 150 + 24,
-+	.htotal = 485 + 150 + 24 + 40,
-+	.vdisplay = 1280,
-+	.vsync_start = 1280 + 12,
-+	.vsync_end = 1280 + 12 + 6,
-+	.vtotal = 1280 + 12 + 6 + 10,
++	.hdisplay =    480,
++	.hsync_start = 480 + 16, /* HFP = 16 */
++	.hsync_end =   480 + 16 + 0, /* HSync = 0 */
++	.htotal =      480 + 16 + 0 + 0, /* HBP = 0 */
++	.vdisplay =    1280,
++	.vsync_start = 1280 + 22, /* VFP = 22 */
++	.vsync_end =   1280 + 22 + 4, /* VSYNC = 4 */
++	.vtotal =      1280 + 22 + 4 + 12, /* VBP = 12 */
 +};
 +
 +static inline struct cwd686 *panel_to_cwd686(struct drm_panel *panel)
@@ -105,7 +105,7 @@ index 000000000..6a0eabf92
 +	dcs_write_seq(0xB8,0x23,0x01,0x30,0x34,0x63); // PWRCON_CLK
 +	dcs_write_seq(0xB9,0xA0,0x22,0x00,0x44); // PWRCON_BAT (Disable abnormal power-off?)
 +	dcs_write_seq(0xBA,0x12,0x63); // PWRCON_MODE
-+	dcs_write_seq(0xC1,0x0C,0x16,0x04,0x0C,0x10,0x04); // TCON (Set VBP, VFP, VSW, HBP, HFP, HSW)
++	dcs_write_seq(0xC1,0x0C,0x16,0x04,0x0C,0x10,0x04); // TCON (Set VBP, VFP, VSW, HBP, HFP, HSW) // Default VFP = 0x10
 +	dcs_write_seq(0xC2,0x11,0x41); // TCON2 (Set resolution)
 +	dcs_write_seq(0xC3,0x22,0x31,0x04); // TCON3 (Set frame blanking)
 +	dcs_write_seq(0xC7,0x05,0x23,0x6B,0x49,0x00); // SRCCON

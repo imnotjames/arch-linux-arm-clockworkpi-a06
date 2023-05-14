@@ -29,11 +29,12 @@ source=("http://www.kernel.org/pub/linux/kernel/v6.x/${_srcname}.tar.xz"
         'linux.preset'
         '60-linux.hook'
         '90-linux.hook')
+
 md5sums=('787862593d7bf354cf1a5c37e21fc147'
          'cc007d4bc3599bde532b25501b31fc0a'
          '3cc95468ca7bec77c331783a4f630fef'
          'a4156247d001d9a1f3a25050aecd4f67'
-         '997896d383d935c78c5daef3c5cc3dcf'
+         '66f2e6d7ba8702a1204ea3a32da8a89c'
          '3203d018422505068fc22b909df871aa'
          '1355b2185b2de240c79ef7ca1d4145db'
          '93712e0149c8e292af5f85dc30e5e960'
@@ -249,3 +250,4 @@ for _p in ${pkgname[@]}; do
     _package${_p#${pkgbase}}
   }"
 done
+
