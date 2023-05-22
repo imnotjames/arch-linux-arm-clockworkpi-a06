@@ -73,9 +73,6 @@ static inline struct cwd686 *panel_to_cwd686(struct drm_panel *panel)
 #define ICNL9707_CMD_CGOUTL 0xB3
 #define ICNL9707_CMD_CGOUTR 0xB4
 
-#define ICNL9707_CMD_PASSWORD1 0xF0
-#define ICNL9707_CMD_PASSWORD2 0xF1
-
 #define ICNL9707_CMD_UNLOCK_REGISTER 0xF0
 
 #define ICNL9707_CMD_PWRCON_VCOM 0xB6
@@ -93,9 +90,6 @@ static inline struct cwd686 *panel_to_cwd686(struct drm_panel *panel)
 #define ICNL9707_CMD_ETC 0xD0
 
 #define ICNL9707_P_PWRCON_VCOM_0495V 0x0D
-
-#define ICNL9707_P_PASSWORD1_DEFAULT 0xA5
-#define ICNL9707_P_PASSWORD1_ENABLE_LVL2 0x5A
 
 #define ICNL9707_P_CGOUT_VGL 0x00
 #define ICNL9707_P_CGOUT_VGH 0x01
@@ -136,10 +130,19 @@ static inline struct cwd686 *panel_to_cwd686(struct drm_panel *panel)
 #define ICNL9707_P_CGOUT_XDON 0x24
 #define ICNL9707_P_CGOUT_XDONB 0x25
 
+#define ICNL9707_TCON2_720RGB 0x00
+#define ICNL9707_TCON2_600RGB 0x01
+#define ICNL9707_TCON2_640RGB 0x03
+
 #define ICNL9707_TCON3_REV_EOR 0x40
 #define ICNL9707_TCON3_B4_EOR 0x30
 #define ICNL9707_TCON3_B3_EOR 0x20
 #define ICNL9707_TCON3_B2_EOR 0x10
+
+#define ICNL9707_SRCCON_ZSHIFT_ENABLE 0x48
+#define ICNL9707_SRCCON_ZSHIFT_DISABLE 0x41
+#define ICNL9707_SRCCON_ZLINE_ENABLE 0x44
+#define ICNL9707_SRCCON_ZLINE_DISABLE 0x41
 
 #define ICNL9707_MADCTL_ML  0x10
 #define ICNL9707_MADCTL_RGB 0x00
@@ -258,7 +261,7 @@ static int cwd686_init_sequence(struct cwd686 *ctx)
 	mipi_dsi_dcs_write_seq(dsi, ICNL9707_CMD_PWRCON_BTA, 0xA0, 0x22, 0x00, 0x44);
 
 	// mipi_dsi_dcs_write_seq(dsi, ICNL9707_CMD_PWRCON_MODE, 0x12, 0xB3);
-	mipi_dsi_dcs_write_seq(dsi, ICNL9707_CMD_PWRCON_MODE, 0x12, 0x63);
+	mipi_dsi_dcs_write_seq(dsi, ICNL9707_CMD_PWRCON_MODE, 0x12, 0x33);
 
 	/* Set timing - VBP, VFP, VSW, HBP, HFP, HSW */
 	// mipi_dsi_dcs_write_seq(dsi, ICNL9707_CMD_TCON, 0x00, 0x0C, 0x10, 0x04, 0x00, 0x0C, 0x10, 0x04);
@@ -276,7 +279,11 @@ static int cwd686_init_sequence(struct cwd686 *ctx)
 	);
 
 	/* Set resolution */
-	mipi_dsi_dcs_write_seq(dsi, ICNL9707_CMD_TCON2, 0x21, 0x80);
+	mipi_dsi_dcs_write_seq(dsi,
+		ICNL9707_CMD_TCON2,
+		(((CWD686_VPX / 2) >> 4) & 0x30) | ICNL9707_TCON2_600RGB,
+		(CWD686_VPX / 2) & 0xFF
+	);
 
 	/* Set frame blanking */
 	mipi_dsi_dcs_write_seq(dsi,
@@ -286,14 +293,19 @@ static int cwd686_init_sequence(struct cwd686 *ctx)
 	);
 
 	/* Set the src state */
-	// Was default so omit
-	mipi_dsi_dcs_write_seq(dsi, ICNL9707_CMD_SRCCON, 0x45, 0x2B, 0x41, 0x00, 0x02);
+	mipi_dsi_dcs_write_seq(dsi,
+		ICNL9707_CMD_SRCCON,
+		0x45,
+		0x2B,
+		ICNL9707_SRCCON_ZSHIFT_DISABLE | ICNL9707_SRCCON_ZLINE_DISABLE,
+		0x00,
+		0x02
+	);
 
 	/* Another undocumented command */
 	// mipi_dsi_dcs_write_seq(dsi, 0xC5, 0x00);
 
 	/* Set failure state dection time - defaults to 0x10 (12.8us) but we maxed it out at 300us */
-	// mipi_dsi_dcs_write_seq(dsi, ICNL9707_CMD_ETC, 0x07, 0xFF, 0xFF);
 	mipi_dsi_dcs_write_seq(dsi, ICNL9707_CMD_ETC, 0x37, 0xFF, 0xFF);
 
 	/* Another set of undocumented commands */
@@ -313,7 +325,6 @@ static int cwd686_init_sequence(struct cwd686 *ctx)
 
 	mipi_dsi_dcs_write_seq(dsi, ICNL9707_CMD_SRC_TIM, 0x00, 0x00, 0xFF, 0x00, 0x00, 0xFF, 0x00, 0x01);
 
-	// +1
 	mipi_dsi_dcs_write_seq(dsi,
 			MIPI_DCS_SET_ADDRESS_MODE,
 		    ICNL9707_MADCTL_ML | ICNL9707_MADCTL_MH | ICNL9707_MADCTL_RGB
@@ -384,8 +395,9 @@ static int cwd686_prepare(struct drm_panel *panel)
 	struct mipi_dsi_device *dsi = to_mipi_dsi_device(ctx->dev);
 	int err;
 
-	if (ctx->prepared)
+	if (ctx->prepared) {
 		return 0;
+	}
 
 	err = regulator_enable(ctx->iovcc);
 	if (err < 0) {
@@ -406,7 +418,6 @@ static int cwd686_prepare(struct drm_panel *panel)
 	gpiod_set_value_cansleep(ctx->reset_gpio, 1);
 	/* T3 */
 	msleep(20);
-
 
 	cwd686_ids_show(ctx);
 
@@ -496,8 +507,9 @@ static int cwd686_probe(struct mipi_dsi_device *dsi)
 	dsi->lanes = 4;
 	dsi->format = MIPI_DSI_FMT_RGB888;
 	dsi->mode_flags = MIPI_DSI_MODE_VIDEO |
-			  MIPI_DSI_MODE_VIDEO_BURST |
-			  MIPI_DSI_MODE_VIDEO_SYNC_PULSE;
+			MIPI_DSI_MODE_LPM |
+			MIPI_DSI_MODE_VIDEO_BURST |
+			MIPI_DSI_MODE_VIDEO_SYNC_PULSE;
 
 	ctx->reset_gpio = devm_gpiod_get_optional(dev, "reset", GPIOD_OUT_HIGH);
 	if (IS_ERR(ctx->reset_gpio)) {
