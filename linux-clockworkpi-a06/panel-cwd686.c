@@ -28,17 +28,15 @@ struct cwd686 {
 	bool prepared;
 };
 
-
-// mipi_dsi_dcs_write_seq(dsi, ICNL9707_CMD_TCON, 0x00, 0x0C, 0x10, 0x04, 0x00, 0x0C, 0x10, 0x04);
 #define CWD686_HPX 480 /* Horizontal in pixels */
-#define CWD686_HFP 20 /* HFP = 150 */
-#define CWD686_HSW 4 /* HSW = 24 */
-#define CWD686_HBP 12 /* HBP = 40 */
+#define CWD686_HFP 150 /* HFP = 150 */
+#define CWD686_HSW 24 /* HSW = 24 */
+#define CWD686_HBP 40 /* HBP = 40 */
 
 #define CWD686_VPX 1280 /* Vertical in pixels */
-#define CWD686_VFP 22 /* VFP = 12 */
-#define CWD686_VSW 4 /* VSW = 6 */
-#define CWD686_VBP 12 /* VBP = 10 */
+#define CWD686_VFP 12 /* VFP = 12 */
+#define CWD686_VSW 6 /* VSW = 6 */
+#define CWD686_VBP 10 /* VBP = 10 */
 
 #define CWD686_FPS 60
 
